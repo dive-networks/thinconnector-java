@@ -48,4 +48,8 @@ public class ClientConfig {
     public String streamLabel() {
         return String.valueOf(props.get("stream.label"));
     }
+
+    public String ruleUrl() {
+        return String.valueOf(props.get("rule.url"));
+    }
 }

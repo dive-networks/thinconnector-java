@@ -1,5 +1,7 @@
 package com.gnip;
 
+import com.gnip.rules.Rule;
+import com.gnip.rules.Rules;
 import com.gnip.stream.DefaultStreamHandler;
 import com.gnip.stream.GnipStream;
 import com.gnip.stream.StreamHandler;
@@ -15,7 +17,7 @@ public class ThinConnector {
         try {
             thinConnector.go();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error occured, check the README to ensure everything is configured.", e);
+            logger.log(Level.SEVERE, "Unexpected error occured.", e);
         }
     }
 
@@ -29,8 +31,26 @@ public class ThinConnector {
         boolean connected = false;
 
         // Aggressively try to connect... for better or worse :)
-        while (!connected) {
+        while (!gnipStream.connected()) {
             connected = gnipStream.establishConnection();
+        }
+
+        Rules rules = gnipStream.listRules();
+
+        for (Rule rule : rules.getRules()) {
+            logger.info(rule.toString());
+        }
+
+        gnipStream.addRule(new Rule("wombat"));
+
+        gnipStream.addRule(new Rule("honeybadger"));
+
+        gnipStream.deleteRule(new Rule("wombat"));
+
+        rules = gnipStream.listRules();
+
+        for (Rule rule : rules.getRules()) {
+            logger.info(rule.toString());
         }
 
         // Blocks

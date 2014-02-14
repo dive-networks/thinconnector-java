@@ -16,9 +16,4 @@ public class Rules {
     public List<Rule> getRules() {
         return rules;
     }
-
-    public void setRules(List<Rule> rules) {
-        this.rules = rules;
-    }
-
 }

@@ -1,6 +1,11 @@
 package com.gnip.stream;
 
 import com.gnip.ClientConfig;
+import com.gnip.rules.Rule;
+import com.gnip.rules.Rules;
+import com.oracle.javafx.jmx.json.JSONDocument;
+import com.oracle.javafx.jmx.json.JSONReader;
+import com.oracle.javafx.jmx.json.impl.JSONStreamReaderImpl;
 import sun.misc.BASE64Encoder;
 
 import java.io.*;
@@ -8,6 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -19,10 +25,11 @@ public class GnipStream {
     private static final Logger logger = Logger.getLogger(GnipStream.class.getName());
     private final ClientConfig clientConfig;
     private final String streamUrl;
+    private String ruleApi;
     private ExecutorService executorService;
     private InputStream inputStream = null;
     private StreamHandler streamHandler;
-    private HttpURLConnection connection;
+    private HttpURLConnection streamingConnection;
     private BufferedReader reader;
     private AtomicBoolean connected = new AtomicBoolean(false);
 
@@ -32,21 +39,14 @@ public class GnipStream {
         this.clientConfig = clientConfig;
         clientConfig.streamLabel();
         this.streamUrl = clientConfig.streamUrl();
+        this.ruleApi = clientConfig.ruleUrl();
         executorService = Executors.newFixedThreadPool(4);
     }
 
     public boolean establishConnection() {
         try {
-            URL url = new URL(streamUrl);
-
-            connection = (HttpURLConnection) url.openConnection();
-            connection.setReadTimeout(clientConfig.streamReadTimeout());
-            connection.setConnectTimeout(1000 * 10);
-            connection.setRequestMethod("GET");
-
-            connection.setRequestProperty("Authorization", createAuthHeader());
-            connection.setRequestProperty("Accept-Encoding", "gzip");
-            inputStream = connection.getInputStream();
+            streamingConnection = getConnection(streamUrl, "GET", false);
+            inputStream = streamingConnection.getInputStream();
             reader = new BufferedReader(new InputStreamReader(new StreamingGZIPInputStream(inputStream), StandardCharsets.UTF_8));
             connected.set(true);
         } catch (IOException e) {
@@ -55,6 +55,21 @@ public class GnipStream {
         }
         streamHandler.notifyConnected(this);
         return true;
+    }
+
+    private HttpURLConnection getConnection(String urlStr, String method, boolean output) throws IOException {
+        URL url = new URL(urlStr);
+
+        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+        connection.setReadTimeout(clientConfig.streamReadTimeout());
+        connection.setConnectTimeout(1000 * 10);
+        connection.setRequestMethod(method);
+        connection.setDoOutput(output);
+
+        connection.setRequestProperty("Authorization", createAuthHeader());
+        connection.setRequestProperty("Accept-Encoding", "gzip");
+
+        return connection;
     }
 
     private String createAuthHeader() throws UnsupportedEncodingException {
@@ -100,14 +115,126 @@ public class GnipStream {
 
     public void close() throws IOException {
         connected.set(false);
-        if (connection != null) {
-            connection.disconnect();
-        }
         if (inputStream != null) {
             inputStream.close();
         }
-        connection = null;
+        if (streamingConnection != null) {
+            streamingConnection.disconnect();
+        }
+        streamingConnection = null;
         inputStream = null;
+    }
+
+    public void addRule(Rule rule) {
+        HttpURLConnection uc = null;
+        try {
+            uc = getConnection(ruleApi, "POST", true);
+            doWithRule(rule, uc);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to add rule: " + rule, e);
+        } finally {
+            if (uc != null) {
+                uc.disconnect();
+            }
+        }
+    }
+
+    public void deleteRule(Rule rule) {
+        HttpURLConnection connection = null;
+        try {
+            connection = getConnection(ruleApi, "DELETE", true);
+            doWithRule(rule, connection);
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Unable to delete rule: " + rule, e);
+        }
+    }
+
+    public Rules listRules() {
+        Rules rules = new Rules();
+        try {
+            HttpURLConnection connection = getConnection(ruleApi, "GET", false);
+
+            InputStream is = connection.getInputStream();
+            int responseCode = connection.getResponseCode();
+
+            if (responseCode >= 200 && responseCode <= 299) {
+
+                JSONReader jsonReader = new JSONStreamReaderImpl(new InputStreamReader((is), StandardCharsets.UTF_8));
+                List<Object> ruleList = jsonReader.build().getList("rules");
+
+                for (Object rule : ruleList) {
+                    StringReader sr = new StringReader(rule.toString());
+                    JSONDocument aRule = new JSONStreamReaderImpl(sr).build();
+                    rules.getRules().add(new Rule(aRule.getString("value"), aRule.getString("tag")));
+                }
+
+            } else {
+                logger.severe("Bad response" + responseCode + connection.getResponseMessage());
+            }
+        } catch (IOException e) {
+            logger.log(Level.SEVERE, "Error listing rules", e);
+        }
+
+        return rules;
+    }
+
+    private void doWithRule(Rule rule, HttpURLConnection uc) throws IOException {
+        OutputStream output = null;
+        try {
+            output = uc.getOutputStream();
+            byte[] bytes = rule.getRule().getBytes(StandardCharsets.UTF_8.name());
+            output.write(bytes);
+        } finally {
+            if (output != null) try {
+                output.close();
+            } catch (IOException logOrIgnore) {
+            }
+        }
+        logResponse(uc);
+    }
+
+    private void logResponse(HttpURLConnection uc) {
+        InputStream is = null;
+        BufferedReader br;
+        String message;
+        try {
+            int responseCode = uc.getResponseCode();
+            String responseMessage = uc.getResponseMessage();
+
+            if (responseCode >= 200 && responseCode <= 299) {
+                is = uc.getInputStream();
+
+                // Just print the first line of the response.
+                br = new BufferedReader(new InputStreamReader(is));
+                message = br.readLine();
+                logger.info("Response Code: " + responseCode + " -- " + responseMessage);
+                while (message != null) {
+                    logger.info(message);
+                    message = br.readLine();
+                }
+            } else {
+                is = uc.getErrorStream();
+                br = new BufferedReader(new InputStreamReader(is));
+                message = br.readLine();
+                while (message != null) {
+                    logger.warning(message);
+                    message = br.readLine();
+                }
+            }
+        } catch (IOException e) {
+            logger.log(Level.WARNING, "Error handling response", e);
+        } finally {
+            if (is != null) {
+                try {
+                    is.close();
+                } catch (IOException ignore) {
+                }
+            }
+        }
+    }
+
+    public boolean connected() {
+        return connected.get();
     }
 
     private class StreamingGZIPInputStream extends GZIPInputStream {
