@@ -1,3 +1,4 @@
-config.properties
 *.iml
 .idea
+config.properties
+out/
