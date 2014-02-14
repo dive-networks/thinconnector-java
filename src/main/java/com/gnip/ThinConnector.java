@@ -37,7 +37,7 @@ public class ThinConnector {
 
         Rules rules = gnipStream.listRules();
 
-        for (Rule rule : rules.getRules()) {
+        for (Rule rule : rules) {
             logger.info(rule.toString());
         }
 
@@ -49,7 +49,7 @@ public class ThinConnector {
 
         rules = gnipStream.listRules();
 
-        for (Rule rule : rules.getRules()) {
+        for (Rule rule : rules) {
             logger.info(rule.toString());
         }
 

@@ -126,12 +126,16 @@ public class GnipStream {
     }
 
     public void addRule(Rule rule) {
+        addRules(new Rules(rule));
+    }
+
+    public void addRules(Rules rules){
         HttpURLConnection uc = null;
         try {
             uc = getConnection(ruleApi, "POST", true);
-            doWithRule(rule, uc);
+            doWithRules(rules, uc);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to add rule: " + rule, e);
+            logger.log(Level.SEVERE, "Unable to add rule: " + rules, e);
         } finally {
             if (uc != null) {
                 uc.disconnect();
@@ -140,12 +144,16 @@ public class GnipStream {
     }
 
     public void deleteRule(Rule rule) {
+        deleteRules(new Rules(rule));
+    }
+
+    public void deleteRules(Rules rules) {
         HttpURLConnection connection = null;
         try {
             connection = getConnection(ruleApi, "DELETE", true);
-            doWithRule(rule, connection);
+            doWithRules(rules, connection);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to delete rule: " + rule, e);
+            logger.log(Level.SEVERE, "Unable to delete rule: " + rules, e);
         }
     }
 
@@ -178,11 +186,11 @@ public class GnipStream {
         return rules;
     }
 
-    private void doWithRule(Rule rule, HttpURLConnection uc) throws IOException {
+    private void doWithRules(Rules rules, HttpURLConnection uc) throws IOException {
         OutputStream output = null;
         try {
             output = uc.getOutputStream();
-            byte[] bytes = rule.getRule().getBytes(StandardCharsets.UTF_8.name());
+            byte[] bytes = rules.build().getBytes(StandardCharsets.UTF_8.name());
             output.write(bytes);
         } finally {
             if (output != null) try {
