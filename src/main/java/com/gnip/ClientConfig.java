@@ -29,10 +29,6 @@ public class ClientConfig {
         return instance;
     }
 
-    public String streamUrl() {
-        return String.valueOf(props.get("stream.url"));
-    }
-
     public String userName() {
         return String.valueOf(props.get("user.name"));
     }
@@ -49,7 +45,7 @@ public class ClientConfig {
         return String.valueOf(props.get("stream.label"));
     }
 
-    public String ruleUrl() {
-        return String.valueOf(props.get("rule.url"));
+    public String accountName() {
+        return String.valueOf(props.get("account.name"));
     }
 }

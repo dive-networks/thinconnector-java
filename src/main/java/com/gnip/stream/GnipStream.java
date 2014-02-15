@@ -13,6 +13,7 @@ import java.net.HttpURLConnection;
 import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.text.MessageFormat;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -24,8 +25,8 @@ import java.util.zip.GZIPInputStream;
 public class GnipStream {
     private static final Logger logger = Logger.getLogger(GnipStream.class.getName());
     private final ClientConfig clientConfig;
-    private final String streamUrl;
-    private String ruleApi;
+    private final String accountName;
+    private final String streamLabel;
     private ExecutorService executorService;
     private InputStream inputStream = null;
     private StreamHandler streamHandler;
@@ -38,23 +39,23 @@ public class GnipStream {
         this.streamHandler = streamHandler;
         this.clientConfig = clientConfig;
         clientConfig.streamLabel();
-        this.streamUrl = clientConfig.streamUrl();
-        this.ruleApi = clientConfig.ruleUrl();
+        accountName = clientConfig.accountName();
+        streamLabel = clientConfig.streamLabel();
         executorService = Executors.newFixedThreadPool(4);
     }
 
-    public boolean establishConnection() {
-        try {
-            streamingConnection = getConnection(streamUrl, "GET", false);
-            inputStream = streamingConnection.getInputStream();
-            reader = new BufferedReader(new InputStreamReader(new StreamingGZIPInputStream(inputStream), StandardCharsets.UTF_8));
-            connected.set(true);
-        } catch (IOException e) {
-            streamHandler.notifyConnectionError(this, e);
-            return false;
-        }
-        streamHandler.notifyConnected(this);
-        return true;
+    private String getStreamingUrl() {
+        return String.format(
+                "https://stream.gnip.com:443/accounts/%s/publishers/twitter/streams/track/%s.json",
+                accountName,
+                streamLabel);
+    }
+
+    private String getRulesUrl() {
+        return String.format(
+                "https://api.gnip.com:443/accounts/%s/publishers/twitter/streams/track/%s/rules.json",
+                accountName,
+                streamLabel);
     }
 
     private HttpURLConnection getConnection(String urlStr, String method, boolean output) throws IOException {
@@ -78,6 +79,23 @@ public class GnipStream {
         return "Basic " + encoder.encode(authToken.getBytes());
     }
 
+    public boolean establishConnection() {
+        try {
+            streamingConnection = getConnection(getStreamingUrl(), "GET", false);
+            inputStream = streamingConnection.getInputStream();
+            reader = new BufferedReader(
+                    new InputStreamReader(
+                            new StreamingGZIPInputStream(inputStream), StandardCharsets.UTF_8));
+
+        } catch (IOException e) {
+            streamHandler.notifyConnectionError(this, e);
+            return false;
+        }
+        connected.set(true);
+        streamHandler.notifyConnected(this);
+        return connected.get();
+    }
+
     public boolean reconnect() {
         boolean success;
         try {
@@ -90,7 +108,7 @@ public class GnipStream {
     }
 
     public String getName() {
-        return streamUrl;
+        return String.format("Account: %s Stream: %s", accountName, streamLabel);
     }
 
     public void stream() throws IOException {
@@ -129,10 +147,10 @@ public class GnipStream {
         addRules(new Rules(rule));
     }
 
-    public void addRules(Rules rules){
+    public void addRules(Rules rules) {
         HttpURLConnection uc = null;
         try {
-            uc = getConnection(ruleApi, "POST", true);
+            uc = getConnection(getRulesUrl(), "POST", true);
             doWithRules(rules, uc);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to add rule: " + rules, e);
@@ -148,9 +166,9 @@ public class GnipStream {
     }
 
     public void deleteRules(Rules rules) {
-        HttpURLConnection connection = null;
+        HttpURLConnection connection;
         try {
-            connection = getConnection(ruleApi, "DELETE", true);
+            connection = getConnection(getRulesUrl(), "DELETE", true);
             doWithRules(rules, connection);
         } catch (IOException e) {
             logger.log(Level.SEVERE, "Unable to delete rule: " + rules, e);
@@ -160,7 +178,7 @@ public class GnipStream {
     public Rules listRules() {
         Rules rules = new Rules();
         try {
-            HttpURLConnection connection = getConnection(ruleApi, "GET", false);
+            HttpURLConnection connection = getConnection(getRulesUrl(), "GET", false);
 
             InputStream is = connection.getInputStream();
             int responseCode = connection.getResponseCode();
@@ -198,10 +216,10 @@ public class GnipStream {
             } catch (IOException logOrIgnore) {
             }
         }
-        logResponse(uc);
+        logRulesResponse(uc, rules);
     }
 
-    private void logResponse(HttpURLConnection uc) {
+    private void logRulesResponse(HttpURLConnection uc, Rules rules) {
         InputStream is = null;
         BufferedReader br;
         String message;
@@ -211,23 +229,21 @@ public class GnipStream {
 
             if (responseCode >= 200 && responseCode <= 299) {
                 is = uc.getInputStream();
-
-                // Just print the first line of the response.
-                br = new BufferedReader(new InputStreamReader(is));
-                message = br.readLine();
-                logger.info("Response Code: " + responseCode + " -- " + responseMessage);
-                while (message != null) {
-                    logger.info(message);
-                    message = br.readLine();
-                }
             } else {
                 is = uc.getErrorStream();
-                br = new BufferedReader(new InputStreamReader(is));
+            }
+
+            logger.info(MessageFormat.format("For method {0} Response Code: {1} -- {2} -- {3}",
+                    uc.getRequestMethod(),
+                    responseCode,
+                    responseMessage,
+                    rules.toString()));
+
+            br = new BufferedReader(new InputStreamReader(is));
+            message = br.readLine();
+            while (message != null) {
+                logger.info(message);
                 message = br.readLine();
-                while (message != null) {
-                    logger.warning(message);
-                    message = br.readLine();
-                }
             }
         } catch (IOException e) {
             logger.log(Level.WARNING, "Error handling response", e);

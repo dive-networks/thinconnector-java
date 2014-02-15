@@ -41,4 +41,13 @@ public class Rules implements Iterable<Rule> {
     public Iterator<Rule> iterator() {
         return rules.iterator();
     }
+
+    @Override
+    public String toString() {
+        StringBuilder sb = new StringBuilder();
+        for (Rule rule : rules) {
+            sb.append(rule);
+        }
+        return sb.toString();
+    }
 }

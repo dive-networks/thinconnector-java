@@ -28,11 +28,9 @@ public class ThinConnector {
 
         GnipStream gnipStream = new GnipStream(streamHandler, clientConfig);
 
-        boolean connected = false;
-
         // Aggressively try to connect... for better or worse :)
         while (!gnipStream.connected()) {
-            connected = gnipStream.establishConnection();
+            gnipStream.establishConnection();
         }
 
         Rules rules = gnipStream.listRules();
