@@ -35,9 +35,7 @@ public class ThinConnector {
 
         Rules rules = gnipStream.listRules();
 
-        for (Rule rule : rules) {
-            logger.info(rule.toString());
-        }
+        logger.info(rules.toString());
 
         gnipStream.addRule(new Rule("wombat"));
 
@@ -47,9 +45,7 @@ public class ThinConnector {
 
         rules = gnipStream.listRules();
 
-        for (Rule rule : rules) {
-            logger.info(rule.toString());
-        }
+        logger.info(rules.toString());
 
         // Blocks
         gnipStream.stream();
