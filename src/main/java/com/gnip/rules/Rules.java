@@ -1,7 +1,9 @@
 package com.gnip.rules;
 
-import com.oracle.javafx.jmx.json.JSONDocument;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.gnip.parsing.JSONUtils;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
@@ -20,21 +22,12 @@ public class Rules implements Iterable<Rule> {
         return rules;
     }
 
-    public String build() {
-        JSONDocument array = JSONDocument.createArray(1);
-        Rule rule;
-        for (int i = 0; i < rules.size(); i++) {
-            rule = rules.get(i);
-            JSONDocument jsonRule = new JSONDocument(JSONDocument.Type.OBJECT);
-            if (rule.getTag() != null) {
-                jsonRule.setString("tag", rule.getTag());
-            }
-            jsonRule.setString("value", rule.getValue());
-            array.set(i, jsonRule);
+    public String build() throws IOException {
+        ArrayNode arrayNode = JSONUtils.getObjectMapper().createArrayNode();
+        for (Rule rule : rules) {
+            arrayNode.add(JSONUtils.parseTree(rule.toString()));
         }
-        JSONDocument rules = JSONDocument.createObject();
-        rules.set("rules", array);
-        return rules.toJSON();
+        return arrayNode.toString();
     }
 
     @Override

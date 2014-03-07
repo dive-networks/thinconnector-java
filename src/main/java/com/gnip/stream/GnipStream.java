@@ -1,12 +1,12 @@
 package com.gnip.stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.gnip.ClientConfig;
+import com.gnip.parsing.JSONUtils;
 import com.gnip.rules.Rule;
 import com.gnip.rules.Rules;
-import com.oracle.javafx.jmx.json.JSONDocument;
-import com.oracle.javafx.jmx.json.JSONReader;
-import com.oracle.javafx.jmx.json.impl.JSONStreamReaderImpl;
-import sun.misc.BASE64Encoder;
+import com.google.common.base.Charsets;
+import org.apache.commons.codec.binary.Base64;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -14,7 +14,6 @@ import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.MessageFormat;
-import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -67,16 +66,19 @@ public class GnipStream {
         connection.setRequestMethod(method);
         connection.setDoOutput(output);
 
-        connection.setRequestProperty("Authorization", createAuthHeader());
+        connection.setRequestProperty("Authorization",
+                createAuthHeader(clientConfig.userName(),
+                        clientConfig.userPassword()));
+
         connection.setRequestProperty("Accept-Encoding", "gzip");
 
         return connection;
     }
 
-    private String createAuthHeader() throws UnsupportedEncodingException {
-        BASE64Encoder encoder = new BASE64Encoder();
-        String authToken = clientConfig.userName() + ":" + clientConfig.userPassword();
-        return "Basic " + encoder.encode(authToken.getBytes());
+    private String createAuthHeader(String username, String password) {
+        String authToken = username + ":" + password;
+        byte[] authTokenBytes = authToken.getBytes(Charsets.UTF_8);
+        return "Basic " + new String(Base64.encodeBase64(authTokenBytes), Charsets.UTF_8);
     }
 
     public boolean establishConnection() {
@@ -185,13 +187,12 @@ public class GnipStream {
 
             if (responseCode >= 200 && responseCode <= 299) {
 
-                JSONReader jsonReader = new JSONStreamReaderImpl(new InputStreamReader((is), StandardCharsets.UTF_8));
-                List<Object> ruleList = jsonReader.build().getList("rules");
+                JsonNode ruleList = JSONUtils.getObjectMapper().readTree(is);
 
-                for (Object rule : ruleList) {
-                    StringReader sr = new StringReader(rule.toString());
-                    JSONDocument aRule = new JSONStreamReaderImpl(sr).build();
-                    rules.getRules().add(new Rule(aRule.getString("value"), aRule.getString("tag")));
+                for (JsonNode rule : ruleList.get("rules")) {
+                    rules.getRules().add(
+                            new Rule(rule.get("value").textValue(),
+                                    rule.get("tag").textValue()));
                 }
 
             } else {
@@ -208,7 +209,7 @@ public class GnipStream {
         OutputStream output = null;
         try {
             output = uc.getOutputStream();
-            byte[] bytes = rules.build().getBytes(StandardCharsets.UTF_8.name());
+            byte[] bytes = rules.build().getBytes(Charsets.UTF_8);
             output.write(bytes);
         } finally {
             if (output != null) try {
