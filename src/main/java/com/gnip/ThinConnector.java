@@ -5,23 +5,21 @@ import com.gnip.rules.Rules;
 import com.gnip.stream.DefaultStreamHandler;
 import com.gnip.stream.GnipStream;
 import com.gnip.stream.StreamHandler;
-
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 public class ThinConnector {
-    private final static Logger logger = Logger.getLogger(ThinConnector.class.getName());
+    private final static Logger logger = Logger.getLogger(ThinConnector.class);
 
     public static void main(String[] args) {
         ThinConnector thinConnector = new ThinConnector();
         try {
-            thinConnector.go();
+            thinConnector.start();
         } catch (Exception e) {
-            logger.log(Level.SEVERE, "Unexpected error occured.", e);
+            logger.error("Unexpected error occured.", e);
         }
     }
 
-    public void go() throws Exception {
+    public void start() throws Exception {
         ClientConfig clientConfig = ClientConfig.getInstance();
 
         StreamHandler streamHandler = new DefaultStreamHandler();

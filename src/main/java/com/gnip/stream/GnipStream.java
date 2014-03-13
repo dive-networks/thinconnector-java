@@ -7,6 +7,7 @@ import com.gnip.rules.Rule;
 import com.gnip.rules.Rules;
 import com.google.common.base.Charsets;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
 
 import java.io.*;
 import java.net.HttpURLConnection;
@@ -17,12 +18,10 @@ import java.text.MessageFormat;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
 public class GnipStream {
-    private static final Logger logger = Logger.getLogger(GnipStream.class.getName());
+    private static final Logger logger = Logger.getLogger(GnipStream.class);
     private final ClientConfig clientConfig;
     private final String accountName;
     private final String streamLabel;
@@ -103,7 +102,7 @@ public class GnipStream {
         try {
             close();
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Could not close stream to attempt re-connect, could be leaking resources", e);
+            logger.error("Could not close stream to attempt re-connect, could be leaking resources", e);
         }
         success = establishConnection();
         return success;
@@ -155,7 +154,7 @@ public class GnipStream {
             uc = getConnection(getRulesUrl(), "POST", true);
             doWithRules(rules, uc);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to add rule: " + rules, e);
+            logger.error("Unable to add rule: " + rules, e);
         } finally {
             if (uc != null) {
                 uc.disconnect();
@@ -173,7 +172,7 @@ public class GnipStream {
             connection = getConnection(getRulesUrl(), "DELETE", true);
             doWithRules(rules, connection);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Unable to delete rule: " + rules, e);
+            logger.error("Unable to delete rule: " + rules, e);
         }
     }
 
@@ -196,10 +195,10 @@ public class GnipStream {
                 }
 
             } else {
-                logger.severe("Bad response" + responseCode + connection.getResponseMessage());
+                logger.error("Bad response" + responseCode + connection.getResponseMessage());
             }
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Error listing rules", e);
+            logger.error("Error listing rules", e);
         }
 
         return rules;
@@ -247,7 +246,7 @@ public class GnipStream {
                 message = br.readLine();
             }
         } catch (IOException e) {
-            logger.log(Level.WARNING, "Error handling response", e);
+            logger.warn("Error handling response", e);
         } finally {
             if (is != null) {
                 try {

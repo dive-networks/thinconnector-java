@@ -1,13 +1,13 @@
 package com.gnip;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class ClientConfig {
-    private static final Logger logger = Logger.getLogger(ClientConfig.class.getName());
+    private static final Logger logger = Logger.getLogger(ClientConfig.class);
     private static ClientConfig instance = null;
     private final Properties props;
 
@@ -17,7 +17,7 @@ public class ClientConfig {
         try {
             props.load(properties);
         } catch (IOException e) {
-            logger.log(Level.SEVERE, "Could not load properties, streams cannot be configured");
+            logger.error("Could not load properties, streams cannot be configured");
             throw new RuntimeException("Could not load properties");
         }
     }

@@ -1,11 +1,11 @@
 package com.gnip.stream;
 
+import org.apache.log4j.Logger;
+
 import java.io.IOException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 public class DefaultStreamHandler implements StreamHandler {
-    Logger logger = Logger.getLogger(StreamHandler.class.getName());
+    Logger logger = Logger.getLogger(StreamHandler.class);
 
     @Override
     public void handleMessage(String message) {
@@ -15,7 +15,7 @@ public class DefaultStreamHandler implements StreamHandler {
 
     @Override
     public void notifyDisconnect(GnipStream gnipStream, IOException e) {
-        logger.log(Level.WARNING, "Disconnected from " + gnipStream.getName(), e);
+        logger.warn("Disconnected from " + gnipStream.getName(), e);
         gnipStream.reconnect();
     }
 
@@ -26,7 +26,7 @@ public class DefaultStreamHandler implements StreamHandler {
 
     @Override
     public void notifyConnectionError(GnipStream gnipStream, IOException e) {
-        logger.log(Level.WARNING, "Error connecting to " + gnipStream.getName(), e);
+        logger.warn("Error connecting to " + gnipStream.getName(), e);
     }
 
 }
