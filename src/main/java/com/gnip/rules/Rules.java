@@ -1,6 +1,7 @@
 package com.gnip.rules;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.gnip.parsing.JSONUtils;
 
 import java.io.IOException;
@@ -27,7 +28,8 @@ public class Rules implements Iterable<Rule> {
         for (Rule rule : rules) {
             arrayNode.add(JSONUtils.parseTree(rule.toString()));
         }
-        return arrayNode.toString();
+        ObjectNode rootNode = JSONUtils.getObjectMapper().createObjectNode();
+        return rootNode.set("rules", arrayNode).toString();
     }
 
     @Override

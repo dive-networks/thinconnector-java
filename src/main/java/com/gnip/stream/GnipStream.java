@@ -180,12 +180,10 @@ public class GnipStream {
         Rules rules = new Rules();
         try {
             HttpURLConnection connection = getConnection(getRulesUrl(), "GET", false);
-
             InputStream is = connection.getInputStream();
             int responseCode = connection.getResponseCode();
 
             if (responseCode >= 200 && responseCode <= 299) {
-
                 JsonNode ruleList = JSONUtils.getObjectMapper().readTree(is);
 
                 for (JsonNode rule : ruleList.get("rules")) {
@@ -193,7 +191,6 @@ public class GnipStream {
                             new Rule(rule.get("value").textValue(),
                                     rule.get("tag").textValue()));
                 }
-
             } else {
                 logger.error("Bad response" + responseCode + connection.getResponseMessage());
             }

@@ -31,9 +31,6 @@ public class Rule {
 
     @Override
     public String toString() {
-        return "Rule{" +
-                "value='" + value + '\'' +
-                ", tag='" + tag + '\'' +
-                '}';
+        return "{\"value\":\"" + value + "\",\"tag\":\"" + tag + "\"}";
     }
 }
