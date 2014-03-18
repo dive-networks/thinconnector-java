@@ -1,32 +1,27 @@
 package com.gnip;
 
+import com.google.inject.Singleton;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.Properties;
 
-public class ClientConfig {
-    private static final Logger logger = Logger.getLogger(ClientConfig.class);
-    private static ClientConfig instance = null;
+@Singleton
+public class Environment {
+    private static final Logger logger = Logger.getLogger(Environment.class);
+    private static Environment instance = null;
     private final Properties props;
 
-    private ClientConfig() {
+    public Environment() {
         props = new Properties();
-        InputStream properties = ClientConfig.class.getClassLoader().getResourceAsStream("config.properties");
+        InputStream properties = Environment.class.getClassLoader().getResourceAsStream("config.properties");
         try {
             props.load(properties);
         } catch (IOException e) {
             logger.error("Could not load properties, streams cannot be configured");
             throw new RuntimeException("Could not load properties");
         }
-    }
-
-    public static ClientConfig getInstance() {
-        if (instance == null) {
-            instance = new ClientConfig();
-        }
-        return instance;
     }
 
     public String userName() {
