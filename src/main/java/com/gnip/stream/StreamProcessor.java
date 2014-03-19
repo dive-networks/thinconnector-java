@@ -17,7 +17,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.zip.GZIPInputStream;
 
 public class StreamProcessor implements Runnable {
-    private static final long MAX_RE_CONNECTION_WAIT_TIME = 5 * 60 * 1000; // 5 minutes
+    private static final long MAX_RE_CONNECTION_WAIT_TIME = 2 * 60 * 1000; // 2 minutes
     private static final long INITIAL_RE_CONNECTION_WAIT_TIME = 250;
     private final Logger logger = Logger.getLogger(getClass());
     private final AtomicInteger reConnectionAttempt = new AtomicInteger();
@@ -39,12 +39,16 @@ public class StreamProcessor implements Runnable {
         this.handler = handler;
         this.taskManager = taskManager;
 
+        // Set up metrics we want to use
         inboundActivityCountMetric = metricRegistry.meter("Inbound Activities Count");
 
-        makeConnectionWithClient();
+        // Create streaming connection using httpClient
+        makeStreamingConnectionWithClient();
     }
 
-    private void makeConnectionWithClient() {
+    private void makeStreamingConnectionWithClient() {
+        // Get an input stream for the streaming connection and create a reader for it
+        // Handle and log connection error or successful response
         try {
             inputStream = client.getStreaming();
             reader = new BufferedReader(
@@ -59,6 +63,10 @@ public class StreamProcessor implements Runnable {
 
     @Override
     public void run() {
+        //TODO: ensure that BufferedReader.readLine() does not break on newlines within activities
+        // Use reader to iterate stream and hand off messages to handler on a separate thread.
+        // Properly handle and log any I/O exceptions on the underlying resources.
+        // Implement reconnect logic if a disconnect is detected
         while (!shuttingDown.get() && !Thread.interrupted()) {
             if (inputStream == null) {
                 reconnect();
@@ -88,6 +96,8 @@ public class StreamProcessor implements Runnable {
     }
 
     private void closeInputStream() {
+        // Close InputStream to free resources when finished with them
+        // For instance, when shutting down or when reconnecting
         logger.info("Closing input stream");
         if (inputStream != null) {
             try {
@@ -99,10 +109,12 @@ public class StreamProcessor implements Runnable {
     }
 
     private void reconnect() {
+        // Make a reconnection attempt
+        // Possibly implement a back off strategy here as to not hammer with connection attempts when something is wrong
+        // Log connection attempts and failures
         logger.info("Attempting reconnect");
         try {
             reConnectionAttempt.incrementAndGet();
-            reConnectionWaitTime = (reConnectionWaitTime * 2);
             reConnectionWaitTime = (reConnectionWaitTime > MAX_RE_CONNECTION_WAIT_TIME)
                     ? MAX_RE_CONNECTION_WAIT_TIME : reConnectionWaitTime;
             try {
@@ -110,7 +122,8 @@ public class StreamProcessor implements Runnable {
             } catch (final InterruptedException e) {
 
             }
-            makeConnectionWithClient();
+            reConnectionWaitTime = (reConnectionWaitTime * 2);
+            makeStreamingConnectionWithClient();
             reConnectionAttempt.set(0);
             reConnectionWaitTime = INITIAL_RE_CONNECTION_WAIT_TIME;
         } catch (final Throwable e) {
