@@ -2,7 +2,8 @@ package com.gnip;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.gnip.stream.GnipStream;
+import com.gnip.stream.GnipAPI;
+import com.gnip.stream.GnipAPI;
 import com.gnip.stream.MongoStreamHandler;
 import com.gnip.stream.StreamHandler;
 import com.google.inject.AbstractModule;
@@ -17,18 +18,30 @@ public class IngesteratorApplication {
     private final static Logger logger = Logger.getLogger(IngesteratorApplication.class);
 
     public static void main(String[] args) {
-        IngesteratorApplication trainingApplication = new IngesteratorApplication();
+        IngesteratorApplication ingesteratorApplication = new IngesteratorApplication();
         try {
-            trainingApplication.start();
+            ingesteratorApplication.start();
         } catch (Exception e) {
             logger.error("Unexpected error occured.", e);
         }
     }
 
     public void start() throws Exception {
+        // Create Guice injector
+        // Get GnipAPI
+        // Stream the datas
         Injector injector = Guice.createInjector(new IngesteratorModule());
-        GnipStream gnipStream = injector.getInstance(GnipStream.class);
-        gnipStream.stream();
+        GnipAPI gnipAPI = injector.getInstance(GnipAPI.class);
+        gnipAPI.stream();
+        // Do Rule MGMT
+
+        boolean closeStream = false;
+        while(!closeStream){
+            // Wait for CMD line input
+            // Parse CMD & args
+            // - addrule, deleterule, listrules, closeStream
+            // gnipApi.command(args)
+        }
     }
 
     public class IngesteratorModule extends AbstractModule {
