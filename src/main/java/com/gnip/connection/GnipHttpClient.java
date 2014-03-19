@@ -4,14 +4,16 @@ import com.gnip.Environment;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
 
 public class GnipHttpClient {
-
+    private final Logger logger = Logger.getLogger(getClass());
     private Environment environment;
     private UriStrategy uriStrategy;
 
@@ -46,9 +48,22 @@ public class GnipHttpClient {
         return "Basic " + new String(Base64.encodeBase64(authTokenBytes), Charsets.UTF_8);
     }
 
-    public HttpURLConnection getStreaming() throws IOException {
+    public InputStream getStreaming() throws IOException {
         URI streamUri = uriStrategy.createStreamUri(environment.accountName(), environment.streamLabel());
-        return getConnection(streamUri.toString(), "GET", true);
+        HttpURLConnection connection = getConnection(streamUri.toString(), "GET", true);
+        int responseCode = connection.getResponseCode();
+        if (responseCode <= 200 && responseCode >= 299) {
+            handleNonSuccessResponse(connection);
+        }
+        return connection.getInputStream();
+    }
+
+    private void handleNonSuccessResponse(HttpURLConnection connection) throws IOException {
+        logger.error(String.format("Error making %s request to %s Response code: %d, Reason: %s",
+                connection.getRequestMethod(),
+                connection.getURL().toString(),
+                connection.getResponseCode(),
+                connection.getResponseMessage()));
     }
 
 }

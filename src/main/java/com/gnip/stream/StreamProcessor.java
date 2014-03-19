@@ -1,6 +1,5 @@
 package com.gnip.stream;
 
-import com.codahale.metrics.Counter;
 import com.codahale.metrics.Meter;
 import com.codahale.metrics.MetricRegistry;
 import com.gnip.connection.GnipHttpClient;
@@ -12,7 +11,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -47,14 +45,8 @@ public class StreamProcessor implements Runnable {
     }
 
     private void makeConnectionWithClient() {
-        HttpURLConnection connection;
         try {
-            connection = client.getStreaming();
-            int responseCode = connection.getResponseCode();
-            if (responseCode >= 200 && responseCode <= 299) {
-                logger.error("Could not make connection, response code was " + responseCode);
-            }
-            inputStream = connection.getInputStream();
+            inputStream = client.getStreaming();
             reader = new BufferedReader(
                     new InputStreamReader(
                             new StreamingGZIPInputStream(inputStream), StandardCharsets.UTF_8));

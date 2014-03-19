@@ -13,11 +13,11 @@ import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
-public class TrainingApplication {
-    private final static Logger logger = Logger.getLogger(TrainingApplication.class);
+public class IngesteratorApplication {
+    private final static Logger logger = Logger.getLogger(IngesteratorApplication.class);
 
     public static void main(String[] args) {
-        TrainingApplication trainingApplication = new TrainingApplication();
+        IngesteratorApplication trainingApplication = new IngesteratorApplication();
         try {
             trainingApplication.start();
         } catch (Exception e) {
@@ -26,16 +26,15 @@ public class TrainingApplication {
     }
 
     public void start() throws Exception {
-        Injector injector = Guice.createInjector(new TrainingModule());
-
+        Injector injector = Guice.createInjector(new IngesteratorModule());
         GnipStream gnipStream = injector.getInstance(GnipStream.class);
         gnipStream.stream();
     }
 
-    public class TrainingModule extends AbstractModule {
+    public class IngesteratorModule extends AbstractModule {
         private final MetricRegistry metricRegistry;
 
-        public TrainingModule() {
+        public IngesteratorModule() {
             metricRegistry = new MetricRegistry();
             final Slf4jReporter reporter = Slf4jReporter.forRegistry(metricRegistry)
                     .outputTo(LoggerFactory.getLogger("com.gnip.metrics"))
