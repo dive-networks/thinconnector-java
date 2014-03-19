@@ -2,7 +2,7 @@ package com.gnip.rules;
 
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.gnip.parsing.JSONUtils;
+import com.gnip.utilities.JSONUtils;
 
 import java.io.IOException;
 import java.util.ArrayList;

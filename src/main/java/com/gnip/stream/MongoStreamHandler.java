@@ -1,5 +1,7 @@
 package com.gnip.stream;
 
+import com.codahale.metrics.MetricRegistry;
+import com.google.inject.Inject;
 import com.mongodb.DB;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
@@ -11,11 +13,15 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.List;
 
-public class DefaultStreamHandler implements StreamHandler {
+public class MongoStreamHandler implements StreamHandler {
     private final DBCollection messageTable;
     Logger logger = Logger.getLogger(StreamHandler.class);
+    private MetricRegistry metricRegistry;
 
-    public DefaultStreamHandler() {
+    @Inject
+    public MongoStreamHandler(MetricRegistry metricRegistry) {
+        this.metricRegistry = metricRegistry;
+
         MongoClient mongo = null;
         try {
             mongo = new MongoClient("localhost", 27017);
@@ -35,18 +41,17 @@ public class DefaultStreamHandler implements StreamHandler {
     }
 
     @Override
-    public void notifyDisconnect(GnipStream gnipStream, IOException e) {
-
+    public void notifyDisconnect(IOException e) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void notifyConnected(GnipStream gnipStream) {
-
+    public void notifyConnected(String streamName) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
-    public void notifyConnectionError(GnipStream gnipStream, IOException e) {
-
+    public void notifyConnectionError(IOException e) {
+        //To change body of implemented methods use File | Settings | File Templates.
     }
-
 }
