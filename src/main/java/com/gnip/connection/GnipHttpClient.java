@@ -24,8 +24,27 @@ public class GnipHttpClient {
         this.uriStrategy = uriStrategy;
     }
 
-    private HttpURLConnection getConnection(String urlStr, String method, boolean output) throws IOException {
-        URL url = new URL(urlStr);
+    public InputStream getStreaming() throws IOException {
+        // Get HttpUrlConnection
+        // Handle and log response
+        // Return the InputStream for the connection
+        URI streamUri = uriStrategy.createStreamUri(environment.accountName(), environment.streamLabel());
+        HttpURLConnection connection = getConnection(new URL(streamUri.toString()), "GET", true);
+        int responseCode = connection.getResponseCode();
+        if (responseCode <= 200 && responseCode >= 299) {
+            handleNonSuccessResponse(connection);
+        }
+        return connection.getInputStream();
+    }
+
+    private HttpURLConnection getConnection(URL url, String method, boolean output) throws IOException {
+        // Open connection with URL
+        // Set options:
+        // - Read timeout from ENV
+        // - Connection timeout e.g. 10000ms
+        // - Request method
+        // - DoOutput
+        // Create basic auth header and setRequestProperty
 
         HttpURLConnection connection = (HttpURLConnection) url.openConnection();
         connection.setReadTimeout(environment.streamReadTimeout());
@@ -43,22 +62,14 @@ public class GnipHttpClient {
     }
 
     private String createAuthHeader(String username, String password) {
+        // Create basic auth header Base64.encodeBase64 username:password
         String authToken = username + ":" + password;
         byte[] authTokenBytes = authToken.getBytes(Charsets.UTF_8);
         return "Basic " + new String(Base64.encodeBase64(authTokenBytes), Charsets.UTF_8);
     }
 
-    public InputStream getStreaming() throws IOException {
-        URI streamUri = uriStrategy.createStreamUri(environment.accountName(), environment.streamLabel());
-        HttpURLConnection connection = getConnection(streamUri.toString(), "GET", true);
-        int responseCode = connection.getResponseCode();
-        if (responseCode <= 200 && responseCode >= 299) {
-            handleNonSuccessResponse(connection);
-        }
-        return connection.getInputStream();
-    }
-
     private void handleNonSuccessResponse(HttpURLConnection connection) throws IOException {
+        // Log the bad response, make sure to leave enough information here to debug any issues
         logger.error(String.format("Error making %s request to %s Response code: %d, Reason: %s",
                 connection.getRequestMethod(),
                 connection.getURL().toString(),
