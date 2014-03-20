@@ -2,8 +2,8 @@ package com.gnip;
 
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
-import com.gnip.stream.GnipAPI;
-import com.gnip.stream.GnipAPI;
+import com.gnip.stream.GnipStream;
+import com.gnip.stream.GnipStream;
 import com.gnip.stream.MongoStreamHandler;
 import com.gnip.stream.StreamHandler;
 import com.google.inject.AbstractModule;
@@ -28,10 +28,10 @@ public class IngesteratorApplication {
 
     public void start() throws Exception {
         // Create Guice injector
-        // Get GnipAPI
+        // Get GnipStream
         // Stream the datas
         Injector injector = Guice.createInjector(new IngesteratorModule());
-        GnipAPI gnipAPI = injector.getInstance(GnipAPI.class);
+        GnipStream gnipAPI = injector.getInstance(GnipStream.class);
         gnipAPI.stream();
         // Do Rule MGMT
 

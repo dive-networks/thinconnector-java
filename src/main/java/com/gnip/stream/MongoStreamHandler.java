@@ -29,7 +29,6 @@ public class MongoStreamHandler implements StreamHandler {
             logger.error("Error connecting to DB", e);
         }
         DB db = mongo.getDB("test");
-        List<String> dbs = mongo.getDatabaseNames();
 
         messageTable = db.getCollection("messages");
     }
