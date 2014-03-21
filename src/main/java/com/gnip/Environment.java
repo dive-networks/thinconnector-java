@@ -10,7 +10,6 @@ import java.util.Properties;
 @Singleton
 public class Environment {
     private static final Logger logger = Logger.getLogger(Environment.class);
-    private static Environment instance = null;
     private final Properties props;
 
     public Environment() {
