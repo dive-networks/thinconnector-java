@@ -13,3 +13,21 @@ including FasterXML's [Jackson libs for JSON parsing](https://github.com/FasterX
 ##Coming
 * Metrics
 * Other streams besides PowerTrack
+
+##Usage
+(from the root directory of the repository)
+
+    cp src/main/resources/example.config.properties src/main/resources/config.properties
+
+Edit config.properties and fill in your own Gnip connection values.
+
+Then build the app: `mvn clean package`.
+
+Start the Mongo daemon if you are using the MongoStreamHandler: `mongod &`.
+Messages will be written into your database as they arrive from the stream.
+
+Now run the app:
+
+    java -cp target/thinconnector-java-1.0.jar com.gnip.IngesteratorApplication
+
+You should see logger messages written to stdout.
