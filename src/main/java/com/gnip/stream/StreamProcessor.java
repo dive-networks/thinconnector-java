@@ -5,7 +5,8 @@ import com.codahale.metrics.MetricRegistry;
 import com.gnip.connection.GnipHttpClient;
 import com.gnip.utilities.TaskManager;
 import com.google.inject.Inject;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -19,7 +20,7 @@ import java.util.zip.GZIPInputStream;
 public class StreamProcessor implements Runnable {
     private static final long MAX_RE_CONNECTION_WAIT_TIME = 2 * 60 * 1000; // 2 minutes
     private static final long INITIAL_RE_CONNECTION_WAIT_TIME = 250;
-    private final Logger logger = Logger.getLogger(getClass());
+    private final Logger logger = LogManager.getLogger(getClass());
     private final AtomicInteger reConnectionAttempt = new AtomicInteger();
     private final StreamHandler handler;
     private final Meter inboundActivityCountMetric;

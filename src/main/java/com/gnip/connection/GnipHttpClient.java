@@ -4,8 +4,8 @@ import com.gnip.Environment;
 import com.google.common.base.Charsets;
 import com.google.inject.Inject;
 import org.apache.commons.codec.binary.Base64;
-import org.apache.log4j.Logger;
-
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -13,7 +13,7 @@ import java.net.URI;
 import java.net.URL;
 
 public class GnipHttpClient {
-    private final Logger logger = Logger.getLogger(getClass());
+    private final Logger logger = LogManager.getLogger(getClass());
     private Environment environment;
     private UriStrategy uriStrategy;
 

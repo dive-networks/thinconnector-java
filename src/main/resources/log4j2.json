@@ -1,0 +1,39 @@
+{
+    "configuration": {
+        "status": "warn",
+        "appenders": {
+            "Console": {
+                "PatternLayout": {
+                    "pattern": "%d{yyyy-MM-dd HH:mm:ss} %-5p %c{1}:%L - %m%n"
+                },
+                "name": "STDOUT"
+            }
+        },
+        "loggers": {
+            "logger": {
+                "level": "trace",
+                "name": "com.gnip.IngesteratorApplication"
+            },
+            "logger": {
+                "level": "debug",
+                "name": "com.gnip.Environment"
+            },
+            "logger": {
+                "level": "debug",
+                "name": "com.gnip.stream.GnipStream"
+            },
+            "logger": {
+                "level": "debug",
+                "name": "com.gnip.stream.MongoStreamHandler"
+            },
+            "logger": {
+                "level": "debug",
+                "name": "com.gnip.stream.StreamProcessor"
+            },
+            "root": {
+                "AppenderRef": { "ref": "STDOUT" },
+                "level": "debug"
+            }
+        }
+    }
+}

@@ -7,7 +7,8 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.util.JSON;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
@@ -15,7 +16,7 @@ import java.util.List;
 
 public class MongoStreamHandler implements StreamHandler {
     private final DBCollection messageTable;
-    Logger logger = Logger.getLogger(StreamHandler.class);
+    Logger logger = LogManager.getLogger(StreamHandler.class);
     private MetricRegistry metricRegistry;
 
     @Inject

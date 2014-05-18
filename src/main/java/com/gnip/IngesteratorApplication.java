@@ -3,22 +3,23 @@ package com.gnip;
 import com.codahale.metrics.MetricRegistry;
 import com.codahale.metrics.Slf4jReporter;
 import com.gnip.stream.GnipStream;
-import com.gnip.stream.GnipStream;
 import com.gnip.stream.MongoStreamHandler;
 import com.gnip.stream.StreamHandler;
 import com.google.inject.AbstractModule;
 import com.google.inject.Guice;
 import com.google.inject.Injector;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.TimeUnit;
 
 public class IngesteratorApplication {
-    private final static Logger logger = Logger.getLogger(IngesteratorApplication.class);
+    private final static Logger logger = LogManager.getLogger(IngesteratorApplication.class);
 
     public static void main(String[] args) {
         IngesteratorApplication ingesteratorApplication = new IngesteratorApplication();
+
         try {
             ingesteratorApplication.start();
         } catch (Exception e) {
@@ -34,7 +35,6 @@ public class IngesteratorApplication {
         GnipStream gnipAPI = injector.getInstance(GnipStream.class);
         gnipAPI.stream();
         // Do Rule MGMT
-
         boolean closeStream = false;
         while(!closeStream){
             // Wait for CMD line input
